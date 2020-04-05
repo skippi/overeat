@@ -20,7 +20,6 @@ public class OverEatMod {
     final IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
     modEventBus.addListener(this::setup);
 
-    // MinecraftForge.EVENT_BUS.addListener(this::serverStarting);
     MinecraftForge.EVENT_BUS.register(this);
   }
 
@@ -36,7 +35,7 @@ public class OverEatMod {
       final String canAlwaysEatFieldName = "field_221473_d";
       ObfuscationReflectionHelper.setPrivateValue(Food.class, food, true, canAlwaysEatFieldName);
 
-      LOGGER.info(String.format("%s: %s", item.getRegistryName(), food.canEatWhenFull()));
+      LOGGER.info("{}#canAlwaysEat = {}", item.getRegistryName(), food.canEatWhenFull());
     }
   }
 }
