@@ -8,6 +8,7 @@ version="${file.jarVersion}"
 displayName="overeat"
 # updateJSONURL="http://myurl.me/"
 displayURL="https://github.com/skippi/overeat"
+logoFile="logo.png"
 credits="Minecraft Forge team"
 authors="skippi"
 description='''
