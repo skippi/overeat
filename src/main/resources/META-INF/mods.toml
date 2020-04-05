@@ -5,7 +5,7 @@ issueTrackerURL="https://github.com/skippi/overeat/issues"
 [[mods]]
 modId="overeat"
 version="${file.jarVersion}"
-displayName="Example Mod"
+displayName="overeat"
 updateJSONURL="http://myurl.me/"
 displayURL="https://github.com/skippi/overeat"
 credits="Minecraft Forge team"
