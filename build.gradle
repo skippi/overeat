@@ -126,13 +126,6 @@ spotless {
 		trimTrailingWhitespace()
 		endWithNewline()
 	}
-	kotlin {
-		ktlint().userData([
-			'indent_size': '2',
-			'continuation_indent_size' : '2',
-			'disabled_rules': 'no-wildcard-imports'
-		])
-	}
 	groovyGradle {
 		greclipse()
 	}
