@@ -14,12 +14,10 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-@Mod("overeat")
+@Mod(OverEatMod.MOD_ID)
 public class OverEatMod {
-  private static final Logger LOGGER = LogManager.getLogger();
+  public static final String MOD_ID = "overeat";
 
   public OverEatMod() {
     FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -27,6 +25,7 @@ public class OverEatMod {
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, getServerSpec());
 
     MinecraftForge.EVENT_BUS.register(this);
+    MinecraftForge.EVENT_BUS.register(new BlockUsageHandler());
   }
 
   private void setup(final FMLCommonSetupEvent event) {
@@ -40,7 +39,20 @@ public class OverEatMod {
     final Set<String> blackList = parseCsvBag(getServerConfig().blackList.get());
     final boolean foodIsBlackListed = blackList.contains(itemId.toString());
 
-    return player.abilities.disableDamage || !foodIsBlackListed || player.getFoodStats().needFood();
+    final boolean blockIsBlackListed =
+        player
+            .getCapability(BlockUsageProvider.CAPABILITY)
+            .map(usage -> usage.currentBlockInteraction)
+            .map(
+                blockState ->
+                    blockState
+                        .map(b -> blackList.contains(b.getBlock().getRegistryName().toString()))
+                        .orElse(false))
+            .orElse(false);
+
+    return player.abilities.disableDamage
+        || (!foodIsBlackListed && !blockIsBlackListed)
+        || player.getFoodStats().needFood();
   }
 
   private static Set<String> parseCsvBag(final String str) {
