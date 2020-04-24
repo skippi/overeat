@@ -36,9 +36,12 @@ public class OverEatMod {
     final ResourceLocation itemId = player.getHeldItemMainhand().getItem().getRegistryName();
     if (itemId == null) return true;
 
-    final Set<String> blackList = parseCsvBag(getServerConfig().blackList.get());
-    final boolean foodIsBlackListed = blackList.contains(itemId.toString());
+    final Set<ResourceLocation> blackList =
+        parseCsvBag(getServerConfig().blackList.get()).stream()
+            .map(ResourceLocation::new)
+            .collect(Collectors.toSet());
 
+    final boolean foodIsBlackListed = blackList.contains(itemId);
     final boolean blockIsBlackListed =
         player
             .getCapability(BlockUsageProvider.CAPABILITY)
@@ -46,7 +49,8 @@ public class OverEatMod {
             .map(
                 blockState ->
                     blockState
-                        .map(b -> blackList.contains(b.getBlock().getRegistryName().toString()))
+                        .map(b -> b.getBlock().getRegistryName())
+                        .map(blackList::contains)
                         .orElse(false))
             .orElse(false);
 
