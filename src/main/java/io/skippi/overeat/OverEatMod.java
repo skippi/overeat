@@ -4,15 +4,15 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,33 +22,29 @@ public class OverEatMod {
   private static final Logger LOGGER = LogManager.getLogger();
 
   public OverEatMod() {
+    FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+
     ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, getServerSpec());
 
     MinecraftForge.EVENT_BUS.register(this);
-    MinecraftForge.EVENT_BUS.addListener(this::onItemRightClick);
   }
 
-  private void onItemRightClick(final PlayerInteractEvent.RightClickItem event) {
-    final ItemStack itemStack = event.getItemStack();
-    if (!itemStack.isFood()) return;
-
-    final PlayerEntity player = event.getPlayer();
-
-    if (isBlackListed(itemStack.getItem()) && !player.getFoodStats().needFood()) {
-      event.setCanceled(true);
-    }
+  private void setup(final FMLCommonSetupEvent event) {
+    CapabilityManager.INSTANCE.register(BlockUsage.class, new BlockUsageStorage(), BlockUsage::new);
   }
 
-  private boolean isBlackListed(final Item item) {
-    final ResourceLocation itemId = item.getRegistryName();
+  public static boolean canEatWithConfig(final PlayerEntity player) {
+    final ResourceLocation itemId = player.getHeldItemMainhand().getItem().getRegistryName();
     if (itemId == null) return true;
 
-    final String blackList = getServerConfig().blackList.get();
-    final String[] separated = blackList.split(",");
-    final Set<String> trimmed =
-        Arrays.stream(separated).map(String::trim).collect(Collectors.toSet());
+    final Set<String> blackList = parseCsvBag(getServerConfig().blackList.get());
+    final boolean foodIsBlackListed = blackList.contains(itemId.toString());
 
-    return trimmed.contains(itemId.toString());
+    return player.abilities.disableDamage || !foodIsBlackListed || player.getFoodStats().needFood();
+  }
+
+  private static Set<String> parseCsvBag(final String str) {
+    return Arrays.stream(str.split(",")).map(String::trim).collect(Collectors.toSet());
   }
 
   static class ServerConfig {
